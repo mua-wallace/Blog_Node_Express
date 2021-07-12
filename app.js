@@ -1,8 +1,8 @@
 const express = require('express');
-const mongoose =require('mongoose');
+const mongoose= require('mongoose');
 const morgan =require('morgan');
-const Blog=  require('./models/blog');
 
+const  Blog = require('./models/blog')
 
 // Express app
 const app = express();
@@ -11,7 +11,7 @@ const app = express();
 // connect to mongoDB
 const dbURI ='mongodb+srv://mua-wallace:12345@cluster0.qb4t8.mongodb.net/myFirstDatabase?retryWrites=true&w=majority';
 mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
-   .then((result)=> app.listen(3000))
+   .then((result)=> app.listen(5000))
    .catch((err)=> console.log(err));
 
 
@@ -25,72 +25,54 @@ mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
  app.use(express.urlencoded({extended: true}));
  app.use(morgan('dev'));
 
- app.get('/add-blog', (req, res)=>{
-    const blog = new Blog({
-        title: 'new blog 1',
-        snippet: 'about my new blog 1',
-        body: 'more about my new blog 1'
-    });
-    blog.save()
-     .then((result) =>{
-         res.send(result)
-     }) 
-     .catch((err) =>{
-         console.log(err)
-     });     
-}) ;
-
-
-app.get('/all-blogs', (req,res)=>{
-    Blog.find()
-        .then((result) =>{
-            res.send(result)
-        })
-            .catch((err) =>{
-                console.log(err);
-            });
-
-});
-app.get('/single-blog', (req,res)=>{
-    Blog.findById()
-        .then((result) =>{
-            res.send(result)
-        })
-            .catch((err) =>{
-                console.log(err);
-            });
-
+// routes
+app.get('/', (req, res) => {
+    res.redirect('/blogs');
 });
 
-
-
-
-
-
-app.get( '/', (req, res) => {
-    const blogs = [
-        {title: 'the importance of Mathematics', snippet: 'lorem '},
-        {title: 'the importance of History', snippet: 'lorem'},
-        {title: 'the importance of Geology', snippet: 'lorem'}
-    ];
-    res.render('index' , { title : 'Home', blogs});
-})
-app.get( '/', (req, res) => {
-    const blogs = [
-        {title: 'the importance of Mathematics', snippet: 'lorem '},
-        {title: 'the importance of History', snippet: 'lorem'},
-        {title: 'the importance of Geology', snippet: 'lorem'}
-    ]
-})
-app.get( '/about', (req, res) => {
+app.get('/about', (req, res) => {
     res.render('about' , { title : 'About'});
+});
+ 
+//blog route
+app.get('/blogs', (req ,res)=>{
+    Blog.find().sort({createdAt: -1})
+     .then((result)=>{
+         res.render('index', {title: 'All Blogs', blogs: result})
+     })
+     .catch((err)=>{
+         console.log(err)
+     })
+});
+app.post('/blogs', (req ,res)=>{
+    const blog = new Blog(blog.body)
+    blog.save()
+     .then((result)=>{
+         res.redirect('/blogs')
+     })
+     .catch((err)=>{
+         console.log(err)
+     })
 })
-   // redirects
-app.get( '/blogs/create', (req, res) => {
+
+app.get('/blogs/:id', (req, res)=>{
+    const id = req.params.id;
+    Blog.findById(id)
+     .then((result)=>{
+         res.render('details', { blog: result, title:'Blog Details'});
+     })
+      .catch((err)=>{
+          console.log(err);
+      }); 
+})
+
+
+
+app.get('/blogs/create', (req, res) => {
     res.render('create' ,  { title : 'Create a new Page'});
 })
 
  // 404 page
-app.get( '/404', (req, res) => {
+app.use( '/404', (req, res) => {
     res.render('404',  { title : '404'});
 });
